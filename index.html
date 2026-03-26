@@ -1,4 +1,67 @@
 <!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Protected Page</title>
+
+  <style>
+    /* Inhalt standardmäßig verstecken */
+    #content {
+      display: none;
+    }
+
+    /* Fullscreen Lock */
+    #lock {
+      position: fixed;
+      inset: 0;
+      background: #111;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 🔒 Lockscreen -->
+  <div id="lock">
+    <div>
+      <h2>Protected Demo</h2>
+      <button onclick="askPassword()">Enter</button>
+    </div>
+  </div>
+
+  <!-- ✅ Dein eigentlicher Content -->
+  <div id="content">
+    <h1>Geheimer Inhalt</h1>
+    <p>Das sieht man nur mit Passwort.</p>
+  </div>
+
+  <script>
+    const correctPassword = "demo1234";
+
+    function askPassword() {
+      const entered = prompt("Passwort eingeben:");
+
+      // ❗ Wenn Abbrechen oder falsch → nichts anzeigen
+      if (!entered || entered !== correctPassword) {
+        alert("Zugriff verweigert");
+        return;
+      }
+
+      // ✅ Zugriff gewährt → Inhalt anzeigen
+      document.getElementById("lock").style.display = "none";
+      document.getElementById("content").style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
