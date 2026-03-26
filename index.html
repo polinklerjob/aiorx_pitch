@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conmod - AI Regression Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00d4ff;
+            --dark-bg: #0a0e27;
+            --text-light: #f5f5f5;
+            --text-muted: #999;
+            --accent-dark: #1a1f3a;
+            --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-light);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .presentation-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* SIDEBAR NAVIGATION */
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--accent-dark) 100%);
+            padding: 30px 0;
+            overflow-y: auto;
+            border-right: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            padding: 0 20px 20px 20px;
+            text-transform: uppercase;
+        }
+
+        .chapter-list {
+            list-style: none;
+        }
+
+        .chapter-item {
+            padding: 0;
+            margin: 0;
+        }
+
+        .chapter-link {
+            display: block;
+            padding: 14px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            transition: all var(--transition);
+            line-height: 1.4;
+        }
+
+        .chapter-link:hover {
+            color: var(--primary);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .chapter-link.active {
+            color: var(--primary);
+            background: rgba(0, 212, 255, 0.1);
+            border-left-color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* MAIN SLIDE AREA */
+        .slides-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--dark-bg);
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: opacity var(--transition), transform var(--transition);
+            pointer-events: none;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        .slide.prev {
+            transform: translateX(-100px);
+        }
+
+        .slide-content {
+            width: 90%;
+            height: 90%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        /* SLIDE COUNTER */
+        .slide-counter {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+
+        /* SLIDE STYLES */
+        h1 {
+            font-size: 64px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--text-light);
+            letter-spacing: -1px;
+        }
+
+        h2 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 28px;
+            color: var(--text-muted);
+            font-weight: 300;
+            margin-bottom: 60px;
+            max-width: 900px;
+            line-height: 1.3;
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* SPECIFIC SLIDE LAYOUTS */
+        .title-slide {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .grid-item {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .stat-number {
+            font-size: 72px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .stat-label {
+            font-size: 20px;
+            color: var(--text-muted);
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        /* FLOW DIAGRAM */
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .flow-box {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid var(--primary);
+            padding: 20px 30px;
+            border-radius: 8px;
+            min-width: 140px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            transition: all var(--transition);
+        }
+
+        .flow-box:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .flow-box.highlight-input {
+            border-color: var(--primary);
+            background: rgba(0, 212, 255, 0.15);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .flow-arrow {
+            font-size: 32px;
+            color: var(--primary);
+        }
+
+        /* CASCADE DIAGRAM */
+        .cascade {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .cascade-item {
+            width: 100%;
+            background: rgba(0, 212, 255, 0.08);
+            border-left: 4px solid var(--primary);
+            padding: 20px 30px;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: 500;
+            text-align: left;
+            animation: cascadeFadeIn 0.5s ease-out forwards;
+        }
+
+        .cascade-item:nth-child(1) { animation-delay: 0.1s; }
+        .cascade-item:nth-child(2) { animation-delay: 0.2s; }
+        .cascade-item:nth-child(3) { animation-delay: 0.3s; }
+        .cascade-item:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes cascadeFadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* PROBLEM/SOLUTION COMPARISON */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .comparison-item {
+            padding: 30px;
+            border-radius: 8px;
+        }
+
+        .comparison-item.problem {
+            background: rgba(255, 100, 100, 0.1);
+            border: 2px solid rgba(255, 100, 100, 0.3);
+        }
+
+        .comparison-item.solution {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid var(--primary);
+        }
+
+        .comparison-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .problem .comparison-title {
+            color: #ff6464;
+        }
+
+        .solution .comparison-title {
+            color: var(--primary);
+        }
+
+        .comparison-list {
+            list-style: none;
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-muted);
+        }
+
+        .comparison-list li {
+            margin-bottom: 12px;
+        }
+
+        .comparison-list li:before {
+            content: "→ ";
+            color: var(--primary);
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        /* METHODOLOGY STEPS */
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 25px;
+            align-items: flex-start;
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+            animation: stepSlideIn 0.5s ease-out forwards;
+        }
+
+        .step:nth-child(1) { animation-delay: 0s; }
+        .step:nth-child(2) { animation-delay: 0.1s; }
+        .step:nth-child(3) { animation-delay: 0.2s; }
+        .step:nth-child(4) { animation-delay: 0.3s; }
+        .step:nth-child(5) { animation-delay: 0.4s; }
+        .step:nth-child(6) { animation-delay: 0.5s; }
+
+        @keyframes stepSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .step-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .step-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+
+        .step-description {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .step-input {
+            background: rgba(0, 212, 255, 0.15);
+            border-left: 4px solid var(--primary);
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* PARTNERSHIP SECTION */
+        .partnership-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            width: 100%;
+            max-width: 1000px;
+            align-items: center;
+        }
+
+        .partnership-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .partnership-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .partnership-list {
+            list-style: none;
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-muted);
+        }
+
+        .partnership-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .partnership-list li:before {
+            content: "• ";
+            color: var(--primary);
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        /* OPEN POINTS / NEXT STEPS */
+        .issues-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .issue-card {
+            background: rgba(0, 212, 255, 0.08);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            padding: 30px 25px;
+            border-radius: 8px;
+            text-align: center;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .issue-icon {
+            font-size: 40px;
+            color: var(--primary);
+        }
+
+        .issue-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        /* KEYBOARD HINT */
+        .keyboard-hint {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 180px;
+            }
+
+            h1 { font-size: 48px; }
+            h2 { font-size: 36px; }
+            .subtitle { font-size: 20px; }
+            .stat-number { font-size: 56px; }
+        }
+
+        /* SCROLLBAR STYLING */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- SIDEBAR NAVIGATION -->
+        <nav class="sidebar">
+            <div class="sidebar-title">Navigate</div>
+            <ul class="chapter-list">
+                <li class="chapter-item">
+                    <a class="chapter-link active" data-chapter="0">Problem</a>
+                </li>
+                <li class="chapter-item">
+                    <a class="chapter-link" data-chapter="1">Solution</a>
+                </li>
+                <li class="chapter-item">
+                    <a class="chapter-link" data-chapter="2">How It Works</a>
+                </li>
+                <li class="chapter-item">
+                    <a class="chapter-link" data-chapter="3">Partnership</a>
+                </li>
+                <li class="chapter-item">
+                    <a class="chapter-link" data-chapter="4">Next Steps</a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- MAIN SLIDES -->
+        <div class="slides-container">
+            <!-- SLIDE 1: TITLE -->
+            <div class="slide active" data-slide="0" data-chapter="0">
+                <div class="slide-content">
+                    <h1>Conmod</h1>
+                    <p class="subtitle">AI-Powered Regression Detection<br>for Automotive Software</p>
+                </div>
+                <div class="slide-counter">1/12</div>
+            </div>
+
+            <!-- SLIDE 2: THE CHALLENGE -->
+            <div class="slide" data-slide="1" data-chapter="0">
+                <div class="slide-content">
+                    <h2>The Customer Challenge</h2>
+                    <p class="subtitle">Responsible for <span class="highlight">Conmod 1.2</span><br>In budget, in time, in quality</p>
+                    <div style="margin-top: 50px; width: 100%; max-width: 800px;">
+                        <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
+                            <div style="font-size: 18px; color: var(--text-muted); font-weight: 600;">Regular releases every 2 weeks</div>
+                            <div style="display: flex; align-items: center; gap: 12px; width: 100%; justify-content: center;">
+                                <div style="width: 60px; height: 60px; background: rgba(0, 212, 255, 0.2); border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: var(--primary);">R1</div>
+                                <div style="font-size: 32px; color: var(--text-muted);">→</div>
+                                <div style="width: 60px; height: 60px; background: rgba(255, 100, 100, 0.2); border: 2px solid #ff6464; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #ff6464;">🔴</div>
+                                <div style="font-size: 32px; color: var(--text-muted);">→</div>
+                                <div style="width: 60px; height: 60px; background: rgba(255, 80, 80, 0.2); border: 2px solid #ff5050; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #ff5050;">🔴🔴</div>
+                            </div>
+                            <div style="font-size: 14px; color: var(--text-muted); margin-top: 15px; text-align: center;">Each release introduces new regressions<br>Severity accumulates</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-counter">2/12</div>
+            </div>
+
+            <!-- SLIDE 3: HOTSPOTS -->
+            <div class="slide" data-slide="2" data-chapter="0">
+                <div class="slide-content">
+                    <h2 style="color: #ff6464;">Critical Hotspots</h2>
+                    <div class="cascade">
+                        <div class="cascade-item" style="border-left-color: #ff6464; background: rgba(255, 100, 100, 0.15);">🔥 Startup</div>
+                        <div class="cascade-item" style="border-left-color: #ff6464; background: rgba(255, 100, 100, 0.15);">⏸️ Cold boot vs. Suspend to RAM</div>
+                        <div class="cascade-item" style="border-left-color: #ff6464; background: rgba(255, 100, 100, 0.15);">⚙️ System behavior: performance, memory, timing</div>
+                        <div class="cascade-item" style="border-left-color: #ff6464; background: rgba(255, 100, 100, 0.15);">📡 Connectivity (eCall, BT, WLAN)</div>
+                    </div>
+                </div>
+                <div class="slide-counter">3/12</div>
+            </div>
+
+            <!-- SLIDE 4: CONSEQUENCES -->
+            <div class="slide" data-slide="3" data-chapter="0">
+                <div class="slide-content">
+                    <h2>The Cost of Regressions</h2>
+                    <div class="cascade">
+                        <div class="cascade-item">❌ Can't deliver to composite system</div>
+                        <div class="cascade-item">🔄 Extra analysis & redelivery cycles</div>
+                        <div class="cascade-item">📅 Milestones delayed</div>
+                        <div class="cascade-item">💰 Budget overruns</div>
+                    </div>
+                </div>
+                <div class="slide-counter">4/12</div>
+            </div>
+
+            <!-- SLIDE 5: DOWNSTREAM IMPACT -->
+            <div class="slide" data-slide="4" data-chapter="0">
+                <div class="slide-content">
+                    <h2>Ripple Effects</h2>
+                    <div class="cascade">
+                        <div class="cascade-item">System instability spreads</div>
+                        <div class="cascade-item">Other systems can't be tested</div>
+                        <div class="cascade-item">Flood of field bug reports</div>
+                        <div class="cascade-item">Loss of confidence in quality</div>
+                        <div class="cascade-item">Escalations, additional meetings, bad reputation</div>
+                    </div>
+                </div>
+                <div class="slide-counter">5/12</div>
+            </div>
+
+            <!-- SLIDE 6: THE IDEA -->
+            <div class="slide" data-slide="5" data-chapter="1">
+                <div class="slide-content">
+                    <h2>Our Idea</h2>
+                    <p class="subtitle" style="margin-top: 50px; font-size: 22px;">AI based, automatic monitoring of release candidates<br><span class="highlight">prio to delivery</span><br>& anomaly / regression detection</p>
+                    <div style="margin-top: 60px; font-size: 16px; color: var(--text-muted);">
+                        Prioritized list starting with hotspots<br>
+                        extending to further functions
+                    </div>
+                </div>
+                <div class="slide-counter">6/12</div>
+            </div>
+
+            <!-- SLIDE 7: WHAT WE DETECT -->
+            <div class="slide" data-slide="6" data-chapter="1">
+                <div class="slide-content">
+                    <h2>Implementation Roadmap</h2>
+                    <p class="subtitle" style="font-size: 18px; margin-bottom: 40px;">Prioritized list of features</p>
+                    <div style="width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%;">
+                            <div style="background: rgba(0, 212, 255, 0.15); border: 2px solid var(--primary); padding: 25px; border-radius: 8px; animation: slideInLeft 0.5s ease-out;">
+                                <div style="font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 8px;">✓ DONE</div>
+                                <div style="font-size: 16px; font-weight: 600; color: var(--text-light);">1. Startup</div>
+                            </div>
+                            <div style="background: rgba(0, 212, 255, 0.08); border: 2px solid rgba(0, 212, 255, 0.3); padding: 25px; border-radius: 8px; animation: slideInLeft 0.5s ease-out 0.1s backwards;">
+                                <div style="font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 8px;">▶ NEXT</div>
+                                <div style="font-size: 16px; font-weight: 600; color: var(--text-light);">2. Cold boot vs. Suspend to RAM</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(0, 212, 255, 0.05); border: 2px dashed rgba(0, 212, 255, 0.2); padding: 25px; border-radius: 8px; animation: slideInLeft 0.5s ease-out 0.2s backwards;">
+                            <div style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">⏳ COMING</div>
+                            <div style="font-size: 16px; font-weight: 600; color: var(--text-light); margin-bottom: 12px;">3. System behavior during startup phase:</div>
+                            <div style="font-size: 14px; color: var(--text-muted); margin-left: 20px; line-height: 1.6;">
+                                • Performance metrics<br>
+                                • Memory consumption<br>
+                                • Timing analysis<br>
+                                <br>
+                                <strong style="color: var(--text-light);">For each regression: qualified report about most likely root causes</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-counter">7/12</div>
+            </div>
+
+            <!-- SLIDE 8: HOW IT WORKS - PART 1 -->
+            <div class="slide" data-slide="7" data-chapter="2">
+                <div class="slide-content">
+                    <h2>How It Works</h2>
+                    <p class="subtitle">6-Step Intelligence Pipeline</p>
+                    <div style="margin-top: 40px; width: 100%; max-width: 900px;">
+                        <div class="steps-container">
+                            <div class="step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-title">Build AI-Ready Trace Databases</div>
+                                    <div class="step-description">OpenSearch/Neo4j from binary and text logs</div>
+                                    <div class="step-input">📥 Latest release candidate required</div>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-title">Exploratory Data Analysis</div>
+                                    <div class="step-description">Identify implicit and explicit key information patterns</div>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-title">Extract & Standardize Information</div>
+                                    <div class="step-description">Map to templates, create actionable artifacts</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-counter">8/12</div>
+            </div>
+
+            <!-- SLIDE 9: HOW IT WORKS - PART 2 -->
+            <div class="slide" data-slide="8" data-chapter="2">
+                <div class="slide-content">
+                    <h2>How It Works</h2>
+                    <p class="subtitle">Continuing the Pipeline</p>
+                    <div style="margin-top: 40px; width: 100%; max-width: 900px;">
+                        <div class="steps-container">
+                            <div class="step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <div class="step-title">Learn System Behavior</div>
+                                    <div class="step-description">Extract patterns from historical good cases</div>
+                                    <div class="step-input">📥 Historical trace data required</div>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">5</div>
+                                <div class="step-content">
+                                    <div class="step-title">Analyze Latest Release Candidate</div>
+                                    <div class="step-description">Detect anomalies against learned behavior, assign scores</div>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">6</div>
+                                <div class="step-content">
+                                    <div class="step-title">Root Cause Analysis</div>
+                                    <div class="step-description">Identify likely sources of detected regressions</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-counter">9/12</div>
+            </div>
+
+            <!-- SLIDE 10: PARTNERSHIP -->
+            <div class="slide" data-slide="9" data-chapter="3">
+                <div class="slide-content">
+                    <h2>How We Work Together</h2>
+                    <div class="partnership-grid">
+                        <div class="partnership-column">
+                            <div class="partnership-title">What We Need</div>
+                            <ul class="partnership-list">
+                                <li>Trace data from previous good runs</li>
+                                <li>Latest release candidate traces</li>
+                                <li>UUIDs / EMS tables</li>
+                                <li>Test environment metadata</li>
+                                <li>SW version information</li>
+                            </ul>
+                        </div>
+                        <div class="partnership-column">
+                            <div class="partnership-title">What We Deliver</div>
+                            <ul class="partnership-list">
+                                <li>Cloud-hosted regression detection</li>
+                                <li>Anomaly reports per release</li>
+                                <li>Root cause analysis</li>
+                                <li>Actionable prioritization</li>
+                                <li>Automated workflow integration</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-counter">10/12</div>
+            </div>
+
+            <!-- SLIDE 11: OPEN POINTS -->
+            <div class="slide" data-slide="10" data-chapter="4">
+                <div class="slide-content">
+                    <h2>Open Points</h2>
+                    <div class="issues-grid">
+                        <div class="issue-card">
+                            <div class="issue-icon">☁️</div>
+                            <div class="issue-text">Cloud Hosting</div>
+                            <div style="font-size: 13px; color: var(--text-muted);">Customer, partner, or hybrid?</div>
+                        </div>
+                        <div class="issue-card">
+                            <div class="issue-icon">🔐</div>
+                            <div class="issue-text">Data Access</div>
+                            <div style="font-size: 13px; color: var(--text-muted);">Secure integration approach</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-counter">11/12</div>
+            </div>
+
+            <!-- SLIDE 12: CTA -->
+            <div class="slide" data-slide="11" data-chapter="4">
+                <div class="slide-content">
+                    <h1>Ready to Eliminate<br><span class="highlight">Regressions?</span></h1>
+                    <p class="subtitle" style="margin-top: 60px;">Let's define the partnership model</p>
+                </div>
+                <div class="slide-counter">12/12</div>
+            </div>
+
+            <div class="keyboard-hint">← → arrows to navigate</div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 12;
+        const chapters = [
+            { start: 0, end: 4, name: 'Problem' },
+            { start: 5, end: 6, name: 'Solution' },
+            { start: 7, end: 8, name: 'How It Works' },
+            { start: 9, end: 9, name: 'Partnership' },
+            { start: 10, end: 11, name: 'Next Steps' }
+        ];
+
+        function goToSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n >= totalSlides) currentSlide = totalSlides - 1;
+            if (n < 0) currentSlide = 0;
+            
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index < currentSlide) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            updateChapterHighlight();
+        }
+
+        function updateChapterHighlight() {
+            const chapterLinks = document.querySelectorAll('.chapter-link');
+            const currentChapter = chapters.findIndex(ch => 
+                currentSlide >= ch.start && currentSlide <= ch.end
+            );
+
+            chapterLinks.forEach((link, index) => {
+                link.classList.toggle('active', index === currentChapter);
+            });
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            goToSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide--;
+            goToSlide(currentSlide);
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // Chapter Navigation
+        document.querySelectorAll('.chapter-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const chapterIndex = parseInt(e.target.dataset.chapter);
+                currentSlide = chapters[chapterIndex].start;
+                goToSlide(currentSlide);
+            });
+        });
+
+        // Initialize
+        goToSlide(0);
+    </script>
+</body>
+</html>
