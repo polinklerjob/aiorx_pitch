@@ -548,7 +548,7 @@
     </style>
 </head>
 <body>
-    <div class="presentation-container">
+    <div class="presentation-container" hidden>
         <!-- SIDEBAR NAVIGATION -->
         <nav class="sidebar">
             <div class="sidebar-title">Navigate</div>
@@ -824,6 +824,7 @@
     </div>
 
     <script>
+        const ACCESS_PASSWORD = '1234';
         let currentSlide = 0;
         const totalSlides = 12;
         const chapters = [
@@ -889,8 +890,30 @@
             });
         });
 
+        function requestAccess() {
+            let password = '';
+
+            while (password !== ACCESS_PASSWORD) {
+                password = window.prompt('Bitte Passwort eingeben:') || '';
+
+                if (password === '') {
+                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;color:#f5f5f5;background:#0a0e27;">Zugriff verweigert</div>';
+                    return false;
+                }
+
+                if (password !== ACCESS_PASSWORD) {
+                    window.alert('Falsches Passwort. Bitte erneut versuchen.');
+                }
+            }
+
+            document.querySelector('.presentation-container').hidden = false;
+            return true;
+        }
+
         // Initialize
-        goToSlide(0);
+        if (requestAccess()) {
+            goToSlide(0);
+        }
     </script>
 </body>
 </html>
